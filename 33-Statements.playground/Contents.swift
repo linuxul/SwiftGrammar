@@ -3,7 +3,7 @@ import UIKit
 // 33.구문 (Statements)
 
 
-case let (x, y) where x == y:
+//case let (x, y) where x == y:
 
 
 // 향후 열거형 케이스 전환 (Switching Over Future Enumeration Cases)
@@ -22,6 +22,7 @@ case .suppressed:
 
 
 // Defer 구문 (Defer Statement)
+// 작성된 위치와 상관 없이 함수 종료 직전에 실행되는 구문
 func f() {
     defer { print("First defer") }
     defer { print("Second defer") }
@@ -46,11 +47,6 @@ print("Compiled with the Swift 5 compiler or later in a Swift mode earlier than 
 // Prints "Compiled with the Swift 5 compiler or later"
 // Prints "Compiled in Swift 4.2 mode or later"
 // Prints "Compiled with the Swift 5 compiler or later in a Swift mode earlier than 5"
-
-
-
-
-
 
 
 

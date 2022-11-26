@@ -15,21 +15,31 @@ protocol MyRenamedProtocol {
     // protocol definition
 }
 
+
 @available(*, unavailable, renamed: "MyRenamedProtocol")
-typealias MyProtocol = MyRenamedProtocol
+typealias MyProtocolNew = MyRenamedProtocol
 
 
 @available(iOS 10.0, macOS 10.12, *)
 class MyClass {
     // class definition
+    var name = ""
 }
 
+var myclass_1 = MyClass.init()
+print("myclass = \(myclass_1)")
 
-@available(swift 3.0.2)
-@available(macOS 10.12, *)
+
+@available(swift 5.0.0)
+//@available(swift 6.0.0)
+//@available(macOS 10.12, *)
 struct MyStruct {
     // struct definition
+    var name = ""
 }
+
+var myStruct_1 = MyStruct()
+print("myStruct = \(myStruct_1)")
 
 
 // dynamicCallable
@@ -47,7 +57,7 @@ struct TelephoneExchange {
 let dial = TelephoneExchange()
 
 // Use a dynamic method call.
-dial(4, 1, 1)
+dial(4, 1, 2)
 // Prints "Get Swift help on forums.swift.org"
 
 dial(8, 6, 7, 5, 3, 0, 9)
@@ -75,9 +85,74 @@ print(repeatLabels(a: 1, b: 2, c: 3, b: 2, a: 1))
 // c c c
 // b b
 // a
+print(repeatLabels(a: 1, b: 2))
+
+//repeatLabels(a: "four") // Error
+
+// @dynamicCallable은 둘중에 하나를 구현해야 된다.
+// func dynamicallyCall(withArguments args: <#Arguments#>) -> <#R1#>
+// func dynamicallyCall(withKeywordArguments args: <#KeywordArguments#>) -> <#R2#>
+
+@dynamicCallable
+struct Contact {
+    var persons: [String: String]
+
+    func dynamicallyCall(withArguments args: [String]) {
+        print("person = \(persons), args = \(args)")
+    }
+}
+
+let contact_1 = Contact(persons: [
+    "지구": "사람",
+    "달": "토끼"
+])
+
+contact_1()
+contact_1("지구")
+contact_1("달")
+
+struct ContactLook {
+    var persons: [String: String]
+
+    subscript(planet: String) -> String? {
+        get {
+            return self.persons[planet]
+        }
+        set {
+            self.persons[planet] = newValue
+        }
+    }
+}
+
+var contact_2 = ContactLook(persons: [
+    "지구": "사람",
+    "달": "토끼"
+])
+
+print("contact_3 = \(contact_2["지구"])")
+contact_2["지구"] = "walker"
+print("contact_3 = \(contact_2["지구"])")
 
 
-repeatLabels(a: "four") // Error
+@dynamicMemberLookup
+struct ContactLookup {
+    var persons: [String: String]
+
+    subscript(dynamicMember plant: String) -> String? {
+        return self.persons[plant]
+    }
+}
+
+var contact_4 = ContactLookup(persons: [
+    "지구": "사람",
+    "달": "토끼"
+])
+
+print("contact_4 = \(contact_4[dynamicMember: "지구"])")
+//contact_4[dynamicMember: "지구"] = "walker"
+print("contact_4 = \(contact_4.지구)")
+print("contact_4 = \(contact_4.화성)")
+
 
 
 // dynamicMemberLookup
@@ -118,12 +193,12 @@ print(wrapper.x)
 
 
 // main
-@main
-struct MyTopLevel {
-    static func main() {
-        // Top-level code goes here
-    }
-}
+//@main
+//struct MyTopLevel {
+//    static func main() {
+//        // Top-level code goes here
+//    }
+//}
 
 
 protocol ProvidesMain {
@@ -132,8 +207,8 @@ protocol ProvidesMain {
 
 
 // NSApplicationMain
-import AppKit
-NSApplicationMain(CommandLine.argc, CommandLine.unsafeArgv)
+//import AppKit
+//NSApplicationMain(CommandLine.argc, CommandLine.unsafeArgv)
 
 
 // objc
@@ -141,6 +216,7 @@ class ExampleClass: NSObject {
     @objc var enabled: Bool {
         @objc(isEnabled) get {
             // Return the appropriate value
+            return true
         }
     }
 }
@@ -177,6 +253,70 @@ struct SomeStruct {
     @SomeWrapper(wrappedValue: 30, custom: 98.7) var d
 }
 
+var someStruct = SomeStruct()
+print("someStruct = \(someStruct)")
+
+someStruct.b = 2000
+print("someStruct = \(someStruct)")
+
+
+@propertyWrapper
+struct Uppercase {
+
+    private var value: String = ""
+
+    var wrappedValue: String {
+        get { self.value }
+        set { self.value = newValue.uppercased() }
+    }
+
+    init(wrappedValue initialValue: String) {
+        self.wrappedValue = initialValue
+    }
+}
+
+struct Address {
+    @Uppercase var town: String
+
+    @Uppercase(wrappedValue: "earch")
+    var planet: String
+}
+
+let address = Address(town: "Seoul")
+print(address.town)
+print(address.planet)
+
+
+@propertyWrapper
+struct UserDefault<T> {
+    let key: String
+    let defaultValue: T
+    var container: UserDefaults = .standard
+
+    var wrappedValue: T {
+        get {
+            return container.object(forKey: key) as? T ?? defaultValue
+        }
+        set {
+            container.set(newValue, forKey: key)
+        }
+    }
+}
+
+extension UserDefaults {
+    @UserDefault(key: "iUserId", defaultValue: "")
+    static var iUserId: String
+    @UserDefault(key: "tSessionId", defaultValue: "")
+    static var tSessionId: String
+}
+
+UserDefaults.iUserId = "1234234"
+
+print("userid = \(UserDefaults.iUserId)")
+
+
+
+
 
 @propertyWrapper
 struct WrapperWithProjection {
@@ -189,13 +329,13 @@ struct SomeProjection {
     var wrapper: WrapperWithProjection
 }
 
-struct SomeStruct {
-    @WrapperWithProjection var x = 123
-}
-let s = SomeStruct()
-s.x           // Int value
-s.$x          // SomeProjection value
-s.$x.wrapper  // WrapperWithProjection value
+//struct SomeStruct {
+//    @WrapperWithProjection var x = 123
+//}
+//let s = SomeStruct()
+//s.x           // Int value
+//s.$x          // SomeProjection value
+//s.$x.wrapper  // WrapperWithProjection value
 
 
 // 결과-빌딩 메서드 (Result-Building Methods)

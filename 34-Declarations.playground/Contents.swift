@@ -26,7 +26,8 @@ class Superclass {
 // superclass's getter is called only once to print the value.
 class New: Superclass {
     override var x: Int {
-        didSet { print("New value \(x)") }
+        didSet { print("New value \(oldValue)., \(x)") }
+        willSet { print("New will value , \(x)")}
     }
 }
 let new = New()
@@ -34,6 +35,7 @@ new.x = 100
 // Prints "Setter was called"
 // Prints "Getter was called"
 // Prints "New value 100"
+
 
 // This subclass refers to oldValue in its observer, so the superclass's
 // getter is called once before the setter, and again to print the value.
@@ -44,10 +46,15 @@ class NewAndOld: Superclass {
 }
 let newAndOld = NewAndOld()
 newAndOld.x = 200
+
+
+
 // Prints "Getter was called"
 // Prints "Setter was called"
 // Prints "Getter was called"
 // Prints "Old value 12 - new value 200"
+
+
 
 
 // 타입 별칭 선언 (Type Alias Declaration)
@@ -64,14 +71,33 @@ typealias DictionaryOfInts<Key: Hashable> = Dictionary<Key, Int>
 typealias Diccionario = Dictionary
 
 
-protocol Sequence {
-    associatedtype Iterator: IteratorProtocol
-    typealias Element = Iterator.Element
-}
+//protocol Sequence {
+//    associatedtype Iterator: IteratorProtocol
+//    typealias Element = Iterator.Element
+//}
 
 func sum<T: Sequence>(_ sequence: T) -> Int where T.Element == Int {
-    // ...
+    return sequence.reduce(0, +)
 }
+
+struct CountDown: Sequence, IteratorProtocol {
+    var value: Int
+
+    mutating func next() -> Int? {
+        if value < 0 { return nil }
+        value -= 1
+        return value + 1
+    }
+}
+
+//for (index, value) in CountDown(value: 100).enumerated() {
+//    print("index = \(index), value = \(value)")
+//}
+
+let count_1 = CountDown(value: 100)
+
+let sum_1 = sum(count_1)
+print("sum = \(sum_1)")
 
 
 func f(x: Int, y: Int) -> Int { return x + y }
@@ -83,10 +109,9 @@ repeatGreeting("Hello, world!", count: 2) //  count is labeled, greeting is not
 
 
 // In-Out 파라미터 (In-Out Parameters)
-func someFunction(a: inout Int) -> () -> Int {
+func someFunction(_ a: inout Int) -> () -> Int {
     return { [a] in return a + 1 }
 }
-
 
 func multithreadedFunction(queue: DispatchQueue, x: inout Int) {
     // Make a local copy and manually copy it back.
@@ -94,7 +119,7 @@ func multithreadedFunction(queue: DispatchQueue, x: inout Int) {
     defer { x = localX }
 
     // Operate on localX asynchronously, then wait before returning.
-    queue.async { someMutatingOperation(&localX) }
+//    queue.async { someFunction(&localX) }
     queue.sync {}
 }
 
@@ -103,7 +128,7 @@ func multithreadedFunction(queue: DispatchQueue, x: inout Int) {
 func f(x: Int = 42) -> Int { return x }
 f()       // Valid, uses default value
 f(x: 7)   // Valid, uses the value provided
-f(7)      // Invalid, missing argument label
+//f(7)      // Invalid, missing argument label
 
 
 // 특별한 이름의 메서드 (Methods with Special Names)
@@ -119,7 +144,7 @@ callable.callAsFunction(4, scale: 2)
 // Both function calls print 208.
 
 
-let someFunction1: (Int, Int) -> Void = callable(_:scale:)  // Error
+// let someFunction1: (Int, Int) -> Void = callable(_:scale:)  // Error
 let someFunction2: (Int, Int) -> Void = callable.callAsFunction(_:scale:)
 
 
@@ -129,17 +154,17 @@ func someFunction(callback: () throws -> Void) rethrows {
 }
 
 
-func alwaysThrows() throws {
-    throw SomeError.error
-}
-func someFunction(callback: () throws -> Void) rethrows {
-    do {
-        try callback()
-        try alwaysThrows()  // Invalid, alwaysThrows() isn't a throwing parameter
-    } catch {
-        throw AnotherError.error
-    }
-}
+//func alwaysThrows() throws {
+//    throw SomeError.error
+//}
+//func someFunction(callback: () throws -> Void) rethrows {
+//    do {
+//        try callback()
+//        try alwaysThrows()  // Invalid, alwaysThrows() isn't a throwing parameter
+//    } catch {
+//        throw AnotherError.error
+//    }
+//}
 
 
 // 모든 타입의 케이스가 있는 열거형 (Enumerations with Cases of Any Type)
@@ -152,7 +177,7 @@ let f = Number.integer
 
 // Apply f to create an array of Number instances with integer values
 let evenInts: [Number] = [0, 2, 4, 6].map(f)
-
+print("evenInts = \(evenInts)")
 
 // 간접 열거형 (Enumerations with Indirection)
 enum Tree<T> {
@@ -177,29 +202,29 @@ protocol SomeProtocol {
     static var someValue: Self { get }
     static func someFunction(x: Int) -> Self
 }
-enum MyEnum: SomeProtocol {
-    case someValue
-    case someFunction(x: Int)
-}
+//enum MyEnum: SomeProtocol {
+//    case someValue
+//    case someFunction(x: Int)
+//}
 
 
-protocol SomeProtocol: AnyObject {
+protocol SomeProtocolAny: AnyObject {
     /* Protocol members go here */
 }
 
 
 // 프로토콜 연관된 타입 선언 (Protocol Associated Type Declaration)
-protocol SomeProtocol {
-    associatedtype SomeType
-}
-
-protocol SubProtocolA: SomeProtocol {
-    // This syntax produces a warning.
-    associatedtype SomeType: Equatable
-}
-
-// This syntax is preferred.
-protocol SubProtocolB: SomeProtocol where SomeType: Equatable { }
+//protocol SomeProtocol {
+//    associatedtype SomeType
+//}
+//
+//protocol SubProtocolA: SomeProtocol {
+//    // This syntax produces a warning.
+//    associatedtype SomeType: Equatable
+//}
+//
+//// This syntax is preferred.
+//protocol SubProtocolB: SomeProtocol where SomeType: Equatable { }
 
 
 // 실패 가능한 초기화 구문 (Failable Initializers)
@@ -224,36 +249,96 @@ if let actualInstance = SomeStruct(input: "Hello") {
 
 
 // 재정의한 요구사항은 일부 제너릭 컨텍스트에서 사용되지 않음 (Overridden Requirements Aren’t Used in Some Generic Contexts)
+//protocol Loggable {
+//    func log()
+//}
+//extension Loggable {
+//    func log() {
+//        print(self)
+//    }
+//}
+//
+//protocol TitledLoggable: Loggable {
+//    static var logTitle: String { get }
+//}
+//extension TitledLoggable {
+//    func log() {
+//        print("\(Self.logTitle): \(self)")
+//    }
+//}
+//
+//struct Pair<T>: CustomStringConvertible {
+//    let first: T
+//    let second: T
+//    var description: String {
+//        return "(\(first), \(second))"
+//    }
+//}
+//
+//extension Pair: Loggable where T: Loggable { }
+//extension Pair: TitledLoggable where T: TitledLoggable {
+//    static var logTitle: String {
+//        return "Pair of '\(T.logTitle)'"
+//    }
+//}
+//
+//extension String: TitledLoggable {
+//    static var logTitle: String {
+//        return "String"
+//    }
+//}
+//
+//
+//let oneAndTwo = Pair(first: "one", second: "two")
+//oneAndTwo.log()
+//// Prints "Pair of 'String': (one, two)"
+//
+//
+//func doSomething<T: Loggable>(with x: T) {
+//    x.log()
+//}
+//doSomething(with: oneAndTwo)
+//// Prints "(one, two)"
+//
+
 protocol Loggable {
     func log()
 }
+
 extension Loggable {
     func log() {
-        print(self)
+        print("Loggable = \(self)")
     }
 }
 
 protocol TitledLoggable: Loggable {
     static var logTitle: String { get }
 }
+
 extension TitledLoggable {
     func log() {
-        print("\(Self.logTitle): \(self)")
+        print("TitleLoggable title = \(Self.logTitle), \(self)")
     }
 }
 
 struct Pair<T>: CustomStringConvertible {
-    let first: T
-    let second: T
+    var first: T
+    var second: T
+
     var description: String {
-        return "(\(first), \(second))"
+        return "first = \(first), second = \(second)"
     }
 }
 
-extension Pair: Loggable where T: Loggable { }
+extension Pair: Loggable where T: Loggable {
+//    func log() {
+//        "Pair \(self)"
+//    }
+}
+
 extension Pair: TitledLoggable where T: TitledLoggable {
     static var logTitle: String {
-        return "Pair of '\(T.logTitle)'"
+        return "Pair of \(T.logTitle)"
     }
 }
 
@@ -263,17 +348,35 @@ extension String: TitledLoggable {
     }
 }
 
+extension Int: TitledLoggable {
+    static var logTitle: String {
+        return "Int"
+    }
+}
 
-let oneAndTwo = Pair(first: "one", second: "two")
-oneAndTwo.log()
-// Prints "Pair of 'String': (one, two)"
 
+struct Student: Loggable {
+    var name = "1"
+}
+var student_1 = Student()
+student_1.log()
+
+let pair_1 = Pair(first: "one", second: "two")
+//print("pair_1 = \(pair_1)")
+pair_1.log()
+
+let pair_2 = Pair(first: 1, second: 2)
+pair_2.log()
+
+let pair_3 = Pair(first: Student(name: "student1"), second: Student())
+pair_3.log()
 
 func doSomething<T: Loggable>(with x: T) {
     x.log()
 }
-doSomething(with: oneAndTwo)
-// Prints "(one, two)"
+
+doSomething(with: Student(name: "Love"))
+
 
 
 // 명시적 중복 해결 (Resolving Explicit Redundancy)
@@ -284,13 +387,14 @@ protocol Serializable {
 extension Array: Serializable where Element == Int {
     func serialize() -> Any {
         // implementation
+        return 1
     }
 }
-extension Array: Serializable where Element == String {
-    func serialize() -> Any {
-        // implementation
-    }
-}
+//extension Array: Serializable where Element == String {
+//    func serialize2() -> Any {
+//        // implementation
+//    }
+//}
 // Error: redundant conformance of 'Array<Element>' to protocol 'Serializable'
 
 
@@ -298,11 +402,12 @@ protocol SerializableInArray { }
 extension Int: SerializableInArray { }
 extension String: SerializableInArray { }
 
-extension Array: Serializable where Element: SerializableInArray {
-    func serialize() -> Any {
-        // implementation
-    }
-}
+//extension Array: Serializable where Element: SerializableInArray {
+//    func serialize() -> Any {
+//        // implementation
+//        return 0
+//    }
+//}
 
 
 // 암시적 중복 해결 (Resolving Implicit Redundancy)
@@ -326,8 +431,7 @@ extension Array: TitledLoggable where Element: TitledLoggable {
 extension Array: MarkedLoggable where Element: MarkedLoggable { }
 
 
-extension Array: Loggable where Element: TitledLoggable { }
-extension Array: Loggable where Element: MarkedLoggable { }
-// Error: redundant conformance of 'Array<Element>' to protocol 'Loggable'
-
+//extension Array: Loggable where Element: TitledLoggable { }
+//extension Array: Loggable where Element: MarkedLoggable { }
+//// Error: redundant conformance of 'Array<Element>' to protocol 'Loggable'
 
