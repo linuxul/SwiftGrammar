@@ -2,23 +2,71 @@ import UIKit
 
 // 18.동시성 (Concurrency)
 
+//func downloadPhoto(named: String, complete: @escaping (String) -> Void) {
+//    print("named: = \(named)")
+//    complete("title")
+//}
+//
+//func show(title: String) {
+//    print("title = \(title)")
+//}
+//
+//
+//// 비동기 함수 정의와 호출 (Defining and Calling Asynchronous Functions)
+//func listPhotos(inGallery name: String) async -> [String] {
+//    let result = ["test"] // ... some asynchronous networking code ...
+//    return result
+//}
+//
+//
+//listPhotos(inGallery: "Summer Vacation") { photoNames in
+//    let sortedNames = photoNames.sorted()
+//    let name = sortedNames[0]
+//    downloadPhoto(named: name) { photo in
+//        show(photo)
+//    }
+//}
 
-listPhotos(inGallery: "Summer Vacation") { photoNames in
-    let sortedNames = photoNames.sorted()
-    let name = sortedNames[0]
-    downloadPhoto(named: name) { photo in
-        show(photo)
-    }
+
+//func listPhotos(inGallery name: String) async -> [String] {
+//    let result = // ... some asynchronous networking code ...
+//    return result
+//}
+
+let photoNames = await listPhotos(inGallery: "Summer Vacation")
+let sortedNames = photoNames.sorted()
+let name = sortedNames[0]
+let photo = await downloadPhoto(named: name)
+show(photo)
+
+let firstPhoto = await listPhotos(inGallery: "Summer Vacatioins")[0]
+func move(_ photoName: String, from source: String, to destination: String) {
+    add(photoName, to: destination)
+    remove(photoName, from: source)
 }
 
-
-// 비동기 함수 정의와 호출 (Defining and Calling Asynchronous Functions)
 func listPhotos(inGallery name: String) async -> [String] {
-    let result = // ... some asynchronous networking code ...
-    return result
+     // await Task.sleep( .now() + 1.0)
+    return ["image1", "image2"]
 }
 
 
+let firstPhoto = await downloadPhoto(named: photoName[0])
+let secondPhoto = await downloadPhoto(named: photoName[1])
+let thridPhoto = await downloadPhoto(named: photoName[2])
+
+let photos = [firstPhoto, secondPhoto, thridPhoto]
+show(photos)
+
+async let firstPhoto = downloadPhoto(named: photoName[0])
+async let secondPhoto = downloadPhoto(named: photoName[1])
+async let thridPhoto = downloadPhoto(named: photoName[2])
+
+let photos = await [firstPhoto, secondPhoto, thridPhoto]
+show(photos)
+
+
+/*
 let photoNames = await listPhotos(inGallery: "Summer Vacation")
 let sortedNames = photoNames.sorted()
 let name = sortedNames[0]
@@ -141,7 +189,7 @@ await logger.addReading(from: reading)
 struct TemperatureReading {
     var measurement: Int
 }
-
+*/
 
 
 
